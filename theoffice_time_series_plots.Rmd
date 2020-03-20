@@ -1,0 +1,51 @@
+---
+title: "The Office Time Series"
+author: "Larry D"
+date: "3/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+office_ratings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-17/office_ratings.csv')
+
+office_ratings$season_yr <- format(office_ratings$air_date, "%Y")
+office_ratings$season_mo <- format(office_ratings$air_date, "%m")
+
+```
+
+## Total Votes by Season
+
+
+```{r votes}
+ggplot(office_ratings, aes(x=episode, y=total_votes,  fill=imdb_rating )) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~paste("season",season))
+
+```
+
+## Total Votes to Ratings scatter plot
+
+So from the time series plot it looks that votes is correlated
+to imdb ratings.  Let's find out more with a scatter plot.
+
+Note the season finale is highlighted by a larger point.
+
+```{r ratings}
+episodefinale <- tapply(office_ratings$episode, list(season=office_ratings$season), max)
+office_ratings$finale <- ifelse(office_ratings$episode==rep(episodefinale, episodefinale),1,0)
+datafinale <- office_ratings[which(office_ratings$finale==1),]
+
+ggplot(office_ratings, aes(x=log(total_votes), y=imdb_rating)) +
+  geom_point(aes(color=factor(season))) +
+  geom_smooth(method="lm") +
+  geom_point(data=datafinale, aes(x=log(total_votes), y=imdb_rating, color=factor(season)), size=4 )
+
+```
+
+So it seems that it is correlated to some degree.  The season finales
+seemed to rate well.  Yet also notice that vote totals decrease as
+the seasons progressed.  I suppose that is one reason why the show
+ended after 9 season.
+
